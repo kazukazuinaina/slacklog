@@ -3,6 +3,8 @@ package slacklog
 import (
 	"io/ioutil"
 	"os"
+	"reflect"
+	"sort"
 	"testing"
 )
 
@@ -49,4 +51,45 @@ func TestTarSource(t *testing.T) {
 		t.Fatalf("failed to NewTarSource: %s", err)
 	}
 	testLogSource(t, src)
+}
+
+func readDirAll(t *testing.T, iter LogSourceIter) []string {
+	t.Helper()
+	names, err := ReadDirAll(iter)
+	if err != nil {
+		t.Fatalf("failed to ReadDirAll: %s", err)
+	}
+	sort.Strings(names)
+	return names
+}
+
+func testLogSource_OpenDir(t *testing.T, src LogSource) {
+	t.Helper()
+	iter, err := src.OpenDir("subdir")
+	if err != nil {
+		t.Fatalf("failed to OpenDir(subdir): %s", err)
+	}
+	defer iter.Close()
+	names := readDirAll(t, iter)
+	exp1 := []string{
+		"subdir/data01.json",
+		"subdir/data02.json",
+		"subdir/data03.txt",
+		"subdir/subsubdir",
+	}
+	if !reflect.DeepEqual(exp1, names) {
+		t.Fatalf("subdir1 don't match: want=%v got=%v", exp1, names)
+	}
+}
+
+func TestDirSource_OpenDir(t *testing.T) {
+	testLogSource_OpenDir(t, DirSource("testdata/log_source/dir_source"))
+}
+
+func TestTarSource_OpenDir(t *testing.T) {
+	src, err := NewTarSource("testdata/log_source/tar_source.tar.gz", "tar_source")
+	if err != nil {
+		t.Fatalf("failed to NewTarSource: %s", err)
+	}
+	testLogSource_OpenDir(t, src)
 }

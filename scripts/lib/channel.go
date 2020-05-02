@@ -16,9 +16,9 @@ type ChannelTable struct {
 // NewChannelTable : pathに指定したJSON形式のチャンネルデータを読み込み、
 // ChannelTable を生成する。
 // whitelistに指定したチャンネル名のみを読み込む。
-func NewChannelTable(path string, whitelist []string) (*ChannelTable, error) {
+func NewChannelTable(src LogSource, path string, whitelist []string) (*ChannelTable, error) {
 	var channels []Channel
-	if err := ReadFileAsJSON(path, &channels); err != nil {
+	if err := ReadLogSourceAsJSON(src, path, &channels); err != nil {
 		return nil, err
 	}
 	channels = FilterChannel(channels, whitelist)

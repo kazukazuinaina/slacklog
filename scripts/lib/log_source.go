@@ -4,6 +4,7 @@ import (
 	"archive/tar"
 	"compress/bzip2"
 	"compress/gzip"
+	"errors"
 	"fmt"
 	"io"
 	"os"
@@ -20,10 +21,38 @@ const (
 	compressBzip2
 )
 
+// LogSourceIter defines iterator of directory entries.
+type LogSourceIter interface {
+	Next() error
+	Name() string
+	Close() error
+}
+
+// ReadDirAll reads all entries from LogSourceIter as []string.
+func ReadDirAll(iter LogSourceIter) ([]string, error) {
+	names := []string{}
+	for {
+		err := iter.Next()
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				return names, nil
+			}
+			return nil, err
+		}
+		name := iter.Name()
+		if name != "" {
+			names = append(names, name)
+		}
+	}
+}
+
 // LogSource provides interface to access log files.
 type LogSource interface {
 	// Open opens a named log file.
 	Open(name string) (io.ReadCloser, error)
+
+	// OpenDir opens directory to iterate its entries.
+	OpenDir(name string) (LogSourceIter, error)
 }
 
 // DirSource implements LogSource for physical directory.
@@ -34,7 +63,53 @@ func (ds DirSource) Open(name string) (io.ReadCloser, error) {
 	return os.Open(filepath.Join(string(ds), name))
 }
 
+// OpenDir opens directory to iterate its entries.
+func (ds DirSource) OpenDir(name string) (LogSourceIter, error) {
+	path := filepath.Join(string(ds), name)
+	fi, err := os.Stat(path)
+	if err != nil {
+		return nil, err
+	}
+	if !fi.IsDir() {
+		return nil, fmt.Errorf("not a directory: %s", path)
+	}
+	d, err := os.Open(path)
+	if err != nil {
+		return nil, err
+	}
+	return &dirSourceIter{name: name, dir: d}, nil
+}
+
 var _ LogSource = DirSource("")
+
+type dirSourceIter struct {
+	name string
+	dir  *os.File
+	next os.FileInfo
+}
+
+func (dsi *dirSourceIter) Next() error {
+	dsi.next = nil
+	fis, err := dsi.dir.Readdir(1)
+	if err != nil {
+		return err
+	}
+	dsi.next = fis[0]
+	return nil
+}
+
+func (dsi *dirSourceIter) Name() string {
+	if dsi.next == nil {
+		return ""
+	}
+	// FIXME: should return only files? (exclude dirs)
+	return path.Join(dsi.name, dsi.next.Name())
+}
+
+func (dsi *dirSourceIter) Close() error {
+	dsi.next = nil
+	return dsi.dir.Close()
+}
 
 // TarSource implements LogSource for tar archive.
 type TarSource struct {
@@ -155,4 +230,84 @@ func (ts *TarSource) openTar() (*tar.Reader, io.Closer, error) {
 	}
 }
 
+// OpenDir opens directory to iterate its entries.
+func (ts *TarSource) OpenDir(name string) (LogSourceIter, error) {
+	tr, c, err := ts.openTar()
+	if err != nil {
+		return nil, err
+	}
+	// FIXME: are there better ways to manage trailing '/'
+	for strings.HasSuffix(name, "/") {
+		name = name[:len(name)-1]
+	}
+	stripN := 0
+	if ts.prefixToStrip != "" {
+		name = path.Join(ts.prefixToStrip, name)
+		stripN = len(ts.prefixToStrip) + 1
+	}
+	return &tarSourceIter{
+		tr:     tr,
+		c:      c,
+		prefix: name + "/",
+		stripN: stripN,
+	}, nil
+}
+
 var _ LogSource = (*TarSource)(nil)
+
+type tarSourceIter struct {
+	tr   *tar.Reader
+	c    io.Closer
+	next *tar.Header
+
+	prefix string
+	stripN int
+}
+
+func (tsi *tarSourceIter) Next() error {
+	tsi.next = nil
+	for {
+		h, err := tsi.tr.Next()
+		if err != nil {
+			return err
+		}
+		if !strings.HasPrefix(h.Name, tsi.prefix) {
+			continue
+		}
+		name := h.Name[len(tsi.prefix):]
+		if name == "" {
+			continue
+		}
+		x := strings.IndexRune(name, '/')
+		switch {
+		case x < 0:
+			// a file found.
+			tsi.next = h
+			return nil
+		case x == len(name)-1:
+			// a dir found.
+			tsi.next = h
+			return nil
+		default:
+			// entries in subdir.
+			continue
+		}
+	}
+	return nil
+}
+
+func (tsi *tarSourceIter) Name() string {
+	if tsi.next == nil {
+		return ""
+	}
+	// FIXME: should return only files? (exclude dirs)
+	if tsi.next.Typeflag == tar.TypeDir {
+		return tsi.next.Name[tsi.stripN : len(tsi.next.Name)-1]
+	}
+	return tsi.next.Name[tsi.stripN:]
+}
+
+func (tsi *tarSourceIter) Close() error {
+	tsi.next = nil
+	return tsi.c.Close()
+}

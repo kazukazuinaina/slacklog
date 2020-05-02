@@ -12,9 +12,9 @@ type UserTable struct {
 
 // NewUserTable : pathに指定したJSON形式のユーザデータを読み込み、UserTableを生
 // 成する。
-func NewUserTable(path string) (*UserTable, error) {
+func NewUserTable(src LogSource, path string) (*UserTable, error) {
 	var users []User
-	err := ReadFileAsJSON(path, &users)
+	err := ReadLogSourceAsJSON(src, path, &users)
 	if err != nil {
 		return nil, err
 	}

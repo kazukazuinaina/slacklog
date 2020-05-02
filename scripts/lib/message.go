@@ -1,7 +1,9 @@
 package slacklog
 
 import (
+	"errors"
 	"fmt"
+	"io"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -40,23 +42,26 @@ func NewMessageTable() *MessageTable {
 // ReadLogDir : pathに指定したディレクトリに存在するJSON形式のメッセージデータ
 // を読み込む。
 // すでにそのディレクトリが読み込み済みの場合は処理をスキップする。
-func (m *MessageTable) ReadLogDir(path string) error {
-	dir, err := os.Open(path)
+func (m *MessageTable) ReadLogDir(src LogSource, path string) error {
+	iter, err := src.OpenDir(path)
 	if err != nil {
 		return err
 	}
-	defer dir.Close()
-	names, err := dir.Readdirnames(0)
-	if err != nil {
-		return err
-	}
-	sort.Strings(names)
-	for i := range names {
-		if err := m.ReadLogFile(filepath.Join(path, names[i])); err != nil {
+	defer iter.Close()
+
+	for {
+		err := iter.Next()
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				return nil
+			}
+			return err
+		}
+		err = m.ReadLogFile(src, iter.Name())
+		if err != nil {
 			return err
 		}
 	}
-	return nil
 }
 
 // "{year}-{month}-{day}.json"
@@ -64,16 +69,13 @@ var reMsgFilename = regexp.MustCompile(`^(\d{4})-(\d{2})-\d{2}\.json$`)
 
 // ReadLogFile : pathに指定したJSON形式のメッセージデータを読み込む。
 // すでにそのファイルが読み込み済みの場合は処理をスキップする。
-func (m *MessageTable) ReadLogFile(path string) error {
-	path, err := filepath.Abs(path)
-	if err != nil {
-		return err
-	}
+func (m *MessageTable) ReadLogFile(src LogSource, path string) error {
+	regulatedPath := filepath.Clean(filepath.FromSlash(path))
 	if _, ok := m.loadedFiles[path]; ok {
 		return nil
 	}
 
-	match := reMsgFilename.FindStringSubmatch(filepath.Base(path))
+	match := reMsgFilename.FindStringSubmatch(filepath.Base(regulatedPath))
 	if len(match) == 0 {
 		fmt.Fprintf(os.Stderr, "[warning] skipping %s ...\n", path)
 		return nil
@@ -81,7 +83,7 @@ func (m *MessageTable) ReadLogFile(path string) error {
 
 	var msgs []Message
 	var visibleMsgs []Message
-	err = ReadFileAsJSON(path, &msgs)
+	err := ReadLogSourceAsJSON(src, path, &msgs)
 	if err != nil {
 		return fmt.Errorf("failed to unmarshal %s: %w", path, err)
 	}

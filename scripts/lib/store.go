@@ -3,40 +3,42 @@ package slacklog
 import (
 	"fmt"
 	"os"
-	"path/filepath"
 )
 
 // LogStore : ログデータを各種テーブルを介して取得するための構造体。
 // MessageTableはチャンネル毎に用意しているためmtsはチャンネルIDをキーとするmap
 // となっている。
+
 type LogStore struct {
-	path string
-	ut   *UserTable
-	ct   *ChannelTable
-	et   *EmojiTable
+	src LogSource
+
+	ut *UserTable
+	ct *ChannelTable
+	et *EmojiTable
 	// key: channel ID
 	mts map[string]*MessageTable
 }
 
 // NewLogStore : 各テーブルを生成して、LogStoreを生成する。
 func NewLogStore(dirPath string, cfg *Config) (*LogStore, error) {
-	ut, err := NewUserTable(filepath.Join(dirPath, "users.json"))
+	src := DirSource(dirPath)
+	ut, err := NewUserTable(src, "users.json")
 	if err != nil {
 		return nil, err
 	}
 
-	ct, err := NewChannelTable(filepath.Join(dirPath, "channels.json"), cfg.Channels)
+	ct, err := NewChannelTable(src, "channels.json", cfg.Channels)
 	if err != nil {
 		return nil, err
 	}
 
-	et, err := NewEmojiTable(filepath.Join(dirPath, cfg.EmojiJSON))
+	et, err := NewEmojiTable(src, cfg.EmojiJSON)
 	if err != nil {
 		if !os.IsNotExist(err) {
 			return nil, err
 		}
-		// EmojiTable is not required, so if the file just doesn't exist, continue
-		// processing.
+		// EmojiTable is optional (not required), so if the file just doesn't
+		// exist, continue processing.
 	}
 
 	mts := make(map[string]*MessageTable, len(ct.ChannelMap))
@@ -45,11 +47,11 @@ func NewLogStore(dirPath string, cfg *Config) (*LogStore, error) {
 	}
 
 	return &LogStore{
-		path: dirPath,
-		ut:   ut,
-		ct:   ct,
-		et:   et,
-		mts:  mts,
+		src: src,
+		ut:  ut,
+		ct:  ct,
+		et:  et,
+		mts: mts,
 	}, nil
 }
 
@@ -78,7 +80,7 @@ func (s *LogStore) GetMessagesPerMonth(channelID string) (map[MessageMonthKey][]
 	if !ok {
 		return nil, fmt.Errorf("not found channel: id=%s", channelID)
 	}
-	if err := mt.ReadLogDir(filepath.Join(s.path, channelID)); err != nil {
+	if err := mt.ReadLogDir(s.src, channelID); err != nil {
 		return nil, err
 	}
 
