@@ -72,21 +72,12 @@ func ConvertExportedLogs(args []string) error {
 }
 
 func copyFile(from string, to string) error {
-	r, err := os.Open(from)
+	r, err := ioutil.ReadFile(from)
 	if err != nil {
 		return err
 	}
-	defer r.Close()
 
-	w, err := os.Create(to)
-	if err != nil {
-		return err
-	}
-	defer w.Close()
-
-	_, err = io.Copy(w, r)
-
-	return err
+	return ioutil.WriteFile(to, r, 0666)
 }
 
 func readChannels(channelsJsonPath string, cfgChannels []string) ([]slacklog.Channel, map[string]*slacklog.Channel, error) {
