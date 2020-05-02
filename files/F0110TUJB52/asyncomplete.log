@@ -1,0 +1,21 @@
+["core"
+"trigger characters for buffer"
+1
+{">":{"emoji":[">"]
+      "tags":[">"]
+      "omni":[">"]
+      "vsnip":[">"]
+      "nextword":[">"]}
+":":{"emoji":[":"]
+     "tags":[":"]
+     "omni":[":"]
+     "vsnip":[":"]
+     "nextword":[":"]}
+".":{"emoji":["."]
+     "tags":["."]
+     "omni":["."]
+     "vsnip":["."]
+     "nextword":["."]}
+"/":{"file":["/"]}
+}]
+

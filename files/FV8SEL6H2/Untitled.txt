@@ -1,0 +1,4 @@
+$ bash
+$ ulimit -v `expr 686 \* 1024`
+$ ./helloworld
+$ exit
