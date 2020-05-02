@@ -2,6 +2,7 @@ package slacklog
 
 import (
 	"archive/tar"
+	"archive/zip"
 	"compress/bzip2"
 	"compress/gzip"
 	"errors"
@@ -66,6 +67,20 @@ func OpenAsLogSource(name string) (LogSource, error) {
 	}
 	if fi.IsDir() {
 		return DirSource(name), nil
+	}
+
+	if strings.ToLower(filepath.Ext(name)) == ".zip" {
+		zs, err := NewZipSource(name, "")
+		if err != nil {
+			return nil, err
+		}
+		for _, f := range zs.zr.File {
+			if strings.HasSuffix(f.Name, keyName) {
+				zs.prefix = f.Name[:len(f.Name)-len(keyName)]
+				return zs, nil
+			}
+		}
+		return nil, fmt.Errorf("failed to detect prefix in archive: %s", name)
 	}
 
 	// open as tar file and detect prefix automatically.
@@ -349,3 +364,126 @@ func (tsi *tarSourceIter) Close() error {
 	tsi.next = nil
 	return tsi.c.Close()
 }
+
+// ZipSource implements LogSource for zip archive.
+type ZipSource struct {
+	zipName string
+	zr      *zip.ReadCloser
+	prefix  string
+	fileMap map[string]*zip.File
+}
+
+// NewZipSource creates a new ZipSource instance.
+func NewZipSource(filename string, prefix string) (*ZipSource, error) {
+	zr, err := zip.OpenReader(filename)
+	if err != nil {
+		return nil, err
+	}
+	fileMap := map[string]*zip.File{}
+	for _, f := range zr.File {
+		fileMap[f.Name] = f
+	}
+	return &ZipSource{
+		zipName: filename,
+		zr:      zr,
+		prefix:  prefix,
+		fileMap: fileMap,
+	}, nil
+}
+
+func (zs *ZipSource) Open(name string) (io.ReadCloser, error) {
+	if zs.prefix != "" {
+		name = path.Join(zs.prefix, name)
+	}
+	f, ok := zs.fileMap[name]
+	if !ok {
+		return nil, &os.PathError{
+			Op:   "read zip",
+			Path: zs.zipName + ":" + name,
+			Err:  os.ErrNotExist,
+		}
+	}
+	rc, err := f.Open()
+	if err != nil {
+		return nil, err
+	}
+	return rc, nil
+}
+
+func (zs *ZipSource) OpenDir(name string) (LogSourceIter, error) {
+	// FIXME: are there better ways to manage trailing '/'
+	for strings.HasSuffix(name, "/") {
+		name = name[:len(name)-1]
+	}
+	stripN := 0
+	if zs.prefix != "" {
+		name = path.Join(zs.prefix, name)
+		stripN = len(zs.prefix) + 1
+	}
+	return &zipSourceIter{
+		zs:     zs,
+		prefix: name + "/",
+		next:   -1,
+		stripN: stripN,
+	}, nil
+}
+
+var _ LogSource = (*ZipSource)(nil)
+
+type zipSourceIter struct {
+	zs     *ZipSource
+	prefix string
+	next   int
+	stripN int
+}
+
+func (zsi *zipSourceIter) Next() error {
+	for {
+		if zsi.next < len(zsi.zs.zr.File) {
+			zsi.next++
+		}
+		if zsi.next >= len(zsi.zs.zr.File) {
+			return io.EOF
+		}
+		f := zsi.zs.zr.File[zsi.next]
+		if !strings.HasPrefix(f.Name, zsi.prefix) {
+			continue
+		}
+		name := f.Name[len(zsi.prefix):]
+		if name == "" {
+			continue
+		}
+		x := strings.IndexRune(name, '/')
+		switch {
+		case x < 0:
+			// a file found.
+			return nil
+		case x == len(name)-1:
+			// a dir found.
+			return nil
+		default:
+			// entries in subdir.
+			continue
+		}
+	}
+	return nil
+}
+
+func (zsi *zipSourceIter) Name() string {
+	if zsi.next >= len(zsi.zs.zr.File) {
+		return ""
+	}
+	f := zsi.zs.zr.File[zsi.next]
+	// FIXME: should return only files? (exclude dirs)
+	if f.Mode().IsDir() {
+		return f.Name[zsi.stripN : len(f.Name)-1]
+	}
+	return f.Name[zsi.stripN:]
+}
+
+func (zsi *zipSourceIter) Close() error {
+	zsi.zs = nil
+	return nil
+}
+
+var _ LogSourceIter = (*zipSourceIter)(nil)

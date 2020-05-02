@@ -53,6 +53,15 @@ func TestTarSource(t *testing.T) {
 	testLogSource(t, src)
 }
 
+func TestZipSource(t *testing.T) {
+	src, err := NewZipSource("testdata/log_source/tar_source.zip", "tar_source")
+	if err != nil {
+		t.Fatalf("failed to NewZipSource: %s", err)
+	}
+	testLogSource(t, src)
+}
+
+
 func readDirAll(t *testing.T, iter LogSourceIter) []string {
 	t.Helper()
 	names, err := ReadDirAll(iter)
@@ -90,6 +99,14 @@ func TestTarSource_OpenDir(t *testing.T) {
 	src, err := NewTarSource("testdata/log_source/tar_source.tar.gz", "tar_source")
 	if err != nil {
 		t.Fatalf("failed to NewTarSource: %s", err)
+	}
+	testLogSource_OpenDir(t, src)
+}
+
+func TestZipSource_OpenDir(t *testing.T) {
+	src, err := NewZipSource("testdata/log_source/tar_source.zip", "tar_source")
+	if err != nil {
+		t.Fatalf("failed to NewZipSource: %s", err)
 	}
 	testLogSource_OpenDir(t, src)
 }
