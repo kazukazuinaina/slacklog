@@ -55,6 +55,44 @@ type LogSource interface {
 	OpenDir(name string) (LogSourceIter, error)
 }
 
+const keyName = "/users.json"
+
+// OpenAsLogSource opens a correct LogSource depending type of name
+// automatically.
+func OpenAsLogSource(name string) (LogSource, error) {
+	fi, err := os.Stat(name)
+	if err != nil {
+		return nil, err
+	}
+	if fi.IsDir() {
+		return DirSource(name), nil
+	}
+
+	// open as tar file and detect prefix automatically.
+	ts, err := NewTarSource(name, "")
+	if err != nil {
+		return nil, err
+	}
+	tr, c, err := ts.openTar()
+	if err != nil {
+		return nil, err
+	}
+	defer c.Close()
+	for {
+		h, err := tr.Next()
+		if err != nil {
+			if errors.Is(err, io.EOF) {
+				return nil, fmt.Errorf("failed to detect prefix in archive: %s", name)
+			}
+			return nil, err
+		}
+		if strings.HasSuffix(h.Name, keyName) {
+			ts.prefixToStrip = h.Name[:len(h.Name)-len(keyName)]
+			return ts, nil
+		}
+	}
+}
+
 // DirSource implements LogSource for physical directory.
 type DirSource string
 
@@ -191,7 +229,7 @@ func (ts *TarSource) Open(name string) (io.ReadCloser, error) {
 		h, err := tr.Next()
 		if err != nil {
 			c.Close()
-			if err == io.EOF {
+			if errors.Is(err, io.EOF) {
 				return nil, &os.PathError{
 					Op:   "read tar",
 					Path: ts.tarFilename + ":" + name,

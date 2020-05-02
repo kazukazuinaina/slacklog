@@ -37,7 +37,12 @@ func DownloadFiles(args []string) error {
 	logDir := filepath.Clean(args[0])
 	filesDir := filepath.Clean(args[1])
 
-	s, err := slacklog.NewLogStore(logDir, &slacklog.Config{Channels: []string{"*"}})
+	src, err := slacklog.OpenAsLogSource(logDir)
+	if err != nil {
+		return err
+	}
+
+	s, err := slacklog.NewLogStore(src, &slacklog.Config{Channels: []string{"*"}})
 	if err != nil {
 		return err
 	}

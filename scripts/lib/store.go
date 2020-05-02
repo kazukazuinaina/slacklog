@@ -20,8 +20,7 @@ type LogStore struct {
 }
 
 // NewLogStore : 各テーブルを生成して、LogStoreを生成する。
-func NewLogStore(dirPath string, cfg *Config) (*LogStore, error) {
-	src := DirSource(dirPath)
+func NewLogStore(src LogSource, cfg *Config) (*LogStore, error) {
 	ut, err := NewUserTable(src, "users.json")
 	if err != nil {
 		return nil, err

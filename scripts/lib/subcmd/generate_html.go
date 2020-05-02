@@ -23,7 +23,12 @@ func GenerateHTML(args []string) error {
 		return fmt.Errorf("could not read config: %w", err)
 	}
 
-	s, err := slacklog.NewLogStore(inDir, cfg)
+	src, err := slacklog.OpenAsLogSource(inDir)
+	if err != nil {
+		return err
+	}
+
+	s, err := slacklog.NewLogStore(src, cfg)
 	if err != nil {
 		return err
 	}
