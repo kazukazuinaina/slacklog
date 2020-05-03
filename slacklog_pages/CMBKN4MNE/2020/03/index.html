@@ -1,0 +1,176 @@
+---
+# vim:set ts=2 sts=2 sw=2 et:
+layout: slacklog
+title: vim-jp.slack.com log - &#35rust - 2020年03月
+permalink: /CMBKN4MNE/2020/03/index:output_ext
+---
+<div>
+
+<h2><a href='{{ site.baseurl }}/'>vim-jp.slack.com log</a> - <a href='{{ site.baseurl }}/CMBKN4MNE/'>&#35rust</a> - 2020年03月</h2>
+  <span class='slacklog-message' id='ts-1585012930.069800'>
+    <img class='slacklog-icon' src='https://secure.gravatar.com/avatar/2be992d8a8cd8b523ca0b1467e165376.jpg?s=48&d=https%3A%2F%2Fa.slack-edge.com%2Fdf10d%2Fimg%2Favatars%2Fava_0010-48.png'>
+    <span class='slacklog-name'>lambdalisue</span>
+    <a class='slacklog-datetime' href='#ts-1585012930.069800'>24日 10:22:10</a>
+    <a class='slacklog-slack-link' href='https://vim-jp.slack.com/archives/CMBKN4MNE/p1585012930069800'>Slack</a>
+
+    <span class='slacklog-text'>前提: rust で書いた CLI アプリケーションのバージョンを git タグから取得したい<br>質問: どうすればよいでしょう？<br><br>1. <code>git_version</code> みたいなの使ってビルド時に解決し CLI ではそれを使う（<code>Cargo.toml</code> の <code>version</code> は <code>0.1.0</code> とかで固定）<br>2. 何かしらのすごい方法で <code>Cargo.toml</code> の <code>version</code> と Git のタグを同期して <code>CARGO_PKG_VERSION</code> とかを CLI で返す<br>3. もっと良い方法</span>
+  </span>
+  <span class='slacklog-message' id='ts-1585013114.070900'>
+    <img class='slacklog-icon slacklog-trail' src='https://secure.gravatar.com/avatar/2be992d8a8cd8b523ca0b1467e165376.jpg?s=48&d=https%3A%2F%2Fa.slack-edge.com%2Fdf10d%2Fimg%2Favatars%2Fava_0010-48.png'>
+    <span class='slacklog-name slacklog-trail'>lambdalisue</span>
+    <a class='slacklog-datetime slacklog-trail' href='#ts-1585013114.070900'>24日 10:25:14</a>
+    <a class='slacklog-slack-link' href='https://vim-jp.slack.com/archives/CMBKN4MNE/p1585013114070900'>Slack</a>
+
+    <span class='slacklog-text'>あー別に rust は Cargo 必須というわけではないから <code>Cargo.toml</code> の <code>version</code> とアプリケーションのバージョンは別か... ってことは 1. が最適解かなぁ....?</span>
+  </span>
+  <span class='slacklog-message' id='ts-1585013242.071100'>
+    <img class='slacklog-icon slacklog-trail' src='https://secure.gravatar.com/avatar/2be992d8a8cd8b523ca0b1467e165376.jpg?s=48&d=https%3A%2F%2Fa.slack-edge.com%2Fdf10d%2Fimg%2Favatars%2Fava_0010-48.png'>
+    <span class='slacklog-name slacklog-trail'>lambdalisue</span>
+    <a class='slacklog-datetime slacklog-trail' href='#ts-1585013242.071100'>24日 10:27:22</a>
+    <a class='slacklog-slack-link' href='https://vim-jp.slack.com/archives/CMBKN4MNE/p1585013242071100'>Slack</a>
+
+    <span class='slacklog-text'><a href='https://www.reddit.com/r/rust/comments/aa95c5/cargo_package_version_from_git_tag/'>https://www.reddit.com/r/rust/comments/aa95c5/cargo_package_version_from_git_tag/</a></span>
+    <span class='slacklog-attachments'>
+        <span class='slacklog-attachment slacklog-attachment-other'>
+          <div>
+            <span class='slacklog-attachment-other-serviceicon'><img src='http://www.redditstatic.com/desktop2x/img/favicon/apple-icon-57x57.png'></span>
+            <span class='slacklog-attachment-other-servicename'>reddit</span>
+          </div>
+          <div class='slacklog-attachment-other-title'><a href='https://www.reddit.com/r/rust/comments/aa95c5/cargo_package_version_from_git_tag/'>Cargo package version from git tag</a></div>
+          <div class='slacklog-attachment-other-text'>Is there a way to define the package version as a git tag instead of in the Cargo.toml?</div>
+          <div class='slacklog-attachment-other-thumb'><img src='https://www.redditstatic.com/new-icon.png' width='256' height='256' alt='Cargo package version from git tag'></div>
+        </span>
+    </span>
+  </span>
+  <span class='slacklog-message' id='ts-1585013301.071800'>
+    <img class='slacklog-icon' src='https://secure.gravatar.com/avatar/c83c988365a0fabc4c83cdb600268d59.jpg?s=48&d=https%3A%2F%2Fa.slack-edge.com%2Fdf10d%2Fimg%2Favatars%2Fava_0014-48.png'>
+    <span class='slacklog-name'>Hirokazu Hata</span>
+    <a class='slacklog-datetime' href='#ts-1585013301.071800'>24日 10:28:21</a>
+    <a class='slacklog-slack-link' href='https://vim-jp.slack.com/archives/CMBKN4MNE/p1585013301071800'>Slack</a>
+
+    <span class='slacklog-text'>alacrittyはこうやってました<br><a href='https://github.com/alacritty/alacritty/blob/4000ec04d89b9bd77995960d2a9da8fcad55e003/alacritty/build.rs#L29|https://github.com/alacritty/alacritty/blob/4000ec04d89b9bd77995960d2a9da8fcad55e003/alacritty/build.rs#L29'>https://github.com/alacritty/alacritty/blob/4000ec04d89b9bd77995960d2a9da8fcad55e003/alacritty/build.rs#L29</a></span>
+    <span class='slacklog-attachments'>
+        <span class='slacklog-attachment slacklog-attachment-github'>
+          <span class='slacklog-attachment-github-serviceicon'><img src='https://a.slack-edge.com/80588/img/unfurl_icons/github.png'></span>
+          <span class='slacklog-attachment-github-servicename'>GitHub</span>
+          <span class='slacklog-attachment-github-title'><a href='https://github.com/alacritty/alacritty/blob/4000ec04d89b9bd77995960d2a9da8fcad55e003/alacritty/build.rs#L29'>alacritty/alacritty</a></span>
+          <span class='slacklog-attachment-github-text'>A cross-platform, GPU-accelerated terminal emulator - alacritty/alacritty</span>
+        </span>
+    </span>
+  </span>
+  <span class='slacklog-message' id='ts-1585013403.072100'>
+    <img class='slacklog-icon' src='https://secure.gravatar.com/avatar/2be992d8a8cd8b523ca0b1467e165376.jpg?s=48&d=https%3A%2F%2Fa.slack-edge.com%2Fdf10d%2Fimg%2Favatars%2Fava_0010-48.png'>
+    <span class='slacklog-name'>lambdalisue</span>
+    <a class='slacklog-datetime' href='#ts-1585013403.072100'>24日 10:30:03</a>
+    <a class='slacklog-slack-link' href='https://vim-jp.slack.com/archives/CMBKN4MNE/p1585013403072100'>Slack</a>
+
+    <span class='slacklog-text'><a href='https://github.com/alacritty/alacritty/blob/4000ec04d89b9bd77995960d2a9da8fcad55e003/alacritty/src/cli.rs#L76'>https://github.com/alacritty/alacritty/blob/4000ec04d89b9bd77995960d2a9da8fcad55e003/alacritty/src/cli.rs#L76</a></span>
+    <span class='slacklog-attachments'>
+        <span class='slacklog-attachment slacklog-attachment-github'>
+          <span class='slacklog-attachment-github-serviceicon'><img src='https://a.slack-edge.com/80588/img/unfurl_icons/github.png'></span>
+          <span class='slacklog-attachment-github-servicename'>GitHub</span>
+          <span class='slacklog-attachment-github-title'><a href='https://github.com/alacritty/alacritty/blob/4000ec04d89b9bd77995960d2a9da8fcad55e003/alacritty/src/cli.rs#L76'>alacritty/alacritty</a></span>
+          <span class='slacklog-attachment-github-text'>A cross-platform, GPU-accelerated terminal emulator - alacritty/alacritty</span>
+        </span>
+    </span>
+  </span>
+  <span class='slacklog-message' id='ts-1585013408.072400'>
+    <img class='slacklog-icon slacklog-trail' src='https://secure.gravatar.com/avatar/2be992d8a8cd8b523ca0b1467e165376.jpg?s=48&d=https%3A%2F%2Fa.slack-edge.com%2Fdf10d%2Fimg%2Favatars%2Fava_0010-48.png'>
+    <span class='slacklog-name slacklog-trail'>lambdalisue</span>
+    <a class='slacklog-datetime slacklog-trail' href='#ts-1585013408.072400'>24日 10:30:08</a>
+    <a class='slacklog-slack-link' href='https://vim-jp.slack.com/archives/CMBKN4MNE/p1585013408072400'>Slack</a>
+
+    <span class='slacklog-text'>なるほど...</span>
+  </span>
+  <span class='slacklog-message' id='ts-1585013424.072600'>
+    <img class='slacklog-icon slacklog-trail' src='https://secure.gravatar.com/avatar/2be992d8a8cd8b523ca0b1467e165376.jpg?s=48&d=https%3A%2F%2Fa.slack-edge.com%2Fdf10d%2Fimg%2Favatars%2Fava_0010-48.png'>
+    <span class='slacklog-name slacklog-trail'>lambdalisue</span>
+    <a class='slacklog-datetime slacklog-trail' href='#ts-1585013424.072600'>24日 10:30:24</a>
+    <a class='slacklog-slack-link' href='https://vim-jp.slack.com/archives/CMBKN4MNE/p1585013424072600'>Slack</a>
+
+    <span class='slacklog-text'><a href='https://github.com/alacritty/alacritty/blob/4000ec04d89b9bd77995960d2a9da8fcad55e003/alacritty/Cargo.toml#L3'>https://github.com/alacritty/alacritty/blob/4000ec04d89b9bd77995960d2a9da8fcad55e003/alacritty/Cargo.toml#L3</a></span>
+    <span class='slacklog-attachments'>
+        <span class='slacklog-attachment slacklog-attachment-github'>
+          <span class='slacklog-attachment-github-serviceicon'><img src='https://a.slack-edge.com/80588/img/unfurl_icons/github.png'></span>
+          <span class='slacklog-attachment-github-servicename'>GitHub</span>
+          <span class='slacklog-attachment-github-title'><a href='https://github.com/alacritty/alacritty/blob/4000ec04d89b9bd77995960d2a9da8fcad55e003/alacritty/Cargo.toml#L3'>alacritty/alacritty</a></span>
+          <span class='slacklog-attachment-github-text'>A cross-platform, GPU-accelerated terminal emulator - alacritty/alacritty</span>
+        </span>
+    </span>
+  </span>
+  <span class='slacklog-message' id='ts-1585013497.073300'>
+    <img class='slacklog-icon slacklog-trail' src='https://secure.gravatar.com/avatar/2be992d8a8cd8b523ca0b1467e165376.jpg?s=48&d=https%3A%2F%2Fa.slack-edge.com%2Fdf10d%2Fimg%2Favatars%2Fava_0010-48.png'>
+    <span class='slacklog-name slacklog-trail'>lambdalisue</span>
+    <a class='slacklog-datetime slacklog-trail' href='#ts-1585013497.073300'>24日 10:31:37</a>
+    <a class='slacklog-slack-link' href='https://vim-jp.slack.com/archives/CMBKN4MNE/p1585013497073300'>Slack</a>
+
+    <span class='slacklog-text'><code>Cargo.toml</code> の <code>version</code> を手動管理した上で <code>GIT_HASH</code> があれば、そちらも表示する　的な運用ですね</span>
+  </span>
+  <span class='slacklog-message' id='ts-1585013527.073700'>
+    <img class='slacklog-icon slacklog-trail' src='https://secure.gravatar.com/avatar/2be992d8a8cd8b523ca0b1467e165376.jpg?s=48&d=https%3A%2F%2Fa.slack-edge.com%2Fdf10d%2Fimg%2Favatars%2Fava_0010-48.png'>
+    <span class='slacklog-name slacklog-trail'>lambdalisue</span>
+    <a class='slacklog-datetime slacklog-trail' href='#ts-1585013527.073700'>24日 10:32:07</a>
+    <a class='slacklog-slack-link' href='https://vim-jp.slack.com/archives/CMBKN4MNE/p1585013527073700'>Slack</a>
+
+    <span class='slacklog-text'><a href='https://github.com/alacritty/alacritty/commit/4d9253bb8d6ca6044742ef874e8ff554f4e3b45e'>https://github.com/alacritty/alacritty/commit/4d9253bb8d6ca6044742ef874e8ff554f4e3b45e</a><br><br>できれば &#34;Bump version&#34; 的なコミットをしたくないw</span>
+    <span class='slacklog-attachments'>
+        <span class='slacklog-attachment slacklog-attachment-github'>
+          <span class='slacklog-attachment-github-serviceicon'><img src='https://a.slack-edge.com/80588/img/unfurl_icons/github.png'></span>
+          <span class='slacklog-attachment-github-servicename'>GitHub</span>
+          <span class='slacklog-attachment-github-title'><a href='https://github.com/alacritty/alacritty/commit/4d9253bb8d6ca6044742ef874e8ff554f4e3b45e'>Bump version to 0.4.1 · alacritty/alacritty@4d9253b</a></span>
+          <span class='slacklog-attachment-github-text'>A cross-platform, GPU-accelerated terminal emulator - alacritty/alacritty</span>
+        </span>
+    </span>
+  </span>
+  <span class='slacklog-message' id='ts-1585013592.074700'>
+    <img class='slacklog-icon' src='https://secure.gravatar.com/avatar/c83c988365a0fabc4c83cdb600268d59.jpg?s=48&d=https%3A%2F%2Fa.slack-edge.com%2Fdf10d%2Fimg%2Favatars%2Fava_0014-48.png'>
+    <span class='slacklog-name'>Hirokazu Hata</span>
+    <a class='slacklog-datetime' href='#ts-1585013592.074700'>24日 10:33:12</a>
+    <a class='slacklog-slack-link' href='https://vim-jp.slack.com/archives/CMBKN4MNE/p1585013592074700'>Slack</a>
+
+    <span class='slacklog-text'>crates.ioの登録があるから仕方ないですかねー</span>
+  </span>
+  <span class='slacklog-message' id='ts-1585013629.075000'>
+    <img class='slacklog-icon' src='https://secure.gravatar.com/avatar/2be992d8a8cd8b523ca0b1467e165376.jpg?s=48&d=https%3A%2F%2Fa.slack-edge.com%2Fdf10d%2Fimg%2Favatars%2Fava_0010-48.png'>
+    <span class='slacklog-name'>lambdalisue</span>
+    <a class='slacklog-datetime' href='#ts-1585013629.075000'>24日 10:33:49</a>
+    <a class='slacklog-slack-link' href='https://vim-jp.slack.com/archives/CMBKN4MNE/p1585013629075000'>Slack</a>
+
+    <span class='slacklog-text'>cargo release みたいなコマンドでラップするしかないか...</span>
+  </span>
+  <span class='slacklog-message' id='ts-1585013707.075800'>
+    <img class='slacklog-icon slacklog-trail' src='https://secure.gravatar.com/avatar/2be992d8a8cd8b523ca0b1467e165376.jpg?s=48&d=https%3A%2F%2Fa.slack-edge.com%2Fdf10d%2Fimg%2Favatars%2Fava_0010-48.png'>
+    <span class='slacklog-name slacklog-trail'>lambdalisue</span>
+    <a class='slacklog-datetime slacklog-trail' href='#ts-1585013707.075800'>24日 10:35:07</a>
+    <a class='slacklog-slack-link' href='https://vim-jp.slack.com/archives/CMBKN4MNE/p1585013707075800'>Slack</a>
+
+    <span class='slacklog-text'>やはり CLI のバージョンは Cargo パッケージのバージョンとは異なる、という立ち位置で考えるのが良さそうですね</span>
+  </span>
+  <span class='slacklog-message' id='ts-1585013724.076100'>
+    <img class='slacklog-icon slacklog-trail' src='https://secure.gravatar.com/avatar/2be992d8a8cd8b523ca0b1467e165376.jpg?s=48&d=https%3A%2F%2Fa.slack-edge.com%2Fdf10d%2Fimg%2Favatars%2Fava_0010-48.png'>
+    <span class='slacklog-name slacklog-trail'>lambdalisue</span>
+    <a class='slacklog-datetime slacklog-trail' href='#ts-1585013724.076100'>24日 10:35:24</a>
+    <a class='slacklog-slack-link' href='https://vim-jp.slack.com/archives/CMBKN4MNE/p1585013724076100'>Slack</a>
+
+    <span class='slacklog-text'><a href='http://crates.io|crates.io'>crates.io</a> に登録するわけではないし..</span>
+  </span>
+  <span class='slacklog-message' id='ts-1585014117.077400'>
+    <img class='slacklog-icon slacklog-trail' src='https://secure.gravatar.com/avatar/2be992d8a8cd8b523ca0b1467e165376.jpg?s=48&d=https%3A%2F%2Fa.slack-edge.com%2Fdf10d%2Fimg%2Favatars%2Fava_0010-48.png'>
+    <span class='slacklog-name slacklog-trail'>lambdalisue</span>
+    <a class='slacklog-datetime slacklog-trail' href='#ts-1585014117.077400'>24日 10:41:57</a>
+    <a class='slacklog-slack-link' href='https://vim-jp.slack.com/archives/CMBKN4MNE/p1585014117077400'>Slack</a>
+
+    <span class='slacklog-text'>ひとまず <code>Cargo.toml</code> の <code>version</code> は <code>0.1.0</code> とかに固定して、別枠で <a href='https://docs.rs/git-version/0.3.4/git_version/'>https://docs.rs/git-version/0.3.4/git_version/</a> とか使ってアプリケーションバージョンを定義することにしました 🙇‍♂️</span>
+    <span class='slacklog-attachments'>
+        <span class='slacklog-attachment slacklog-attachment-other'>
+          <div>
+            <span class='slacklog-attachment-other-serviceicon'><img src='https://docs.rs/favicon-20200108-1.42.0-nightly-caa231d99.ico'></span>
+            <span class='slacklog-attachment-other-servicename'>docs.rs</span>
+          </div>
+          <div class='slacklog-attachment-other-title'><a href='https://docs.rs/git-version/0.3.4/git_version/'>git_version - Rust</a></div>
+          <div class='slacklog-attachment-other-text'>API documentation for the Rust <code>git_version</code> crate.</div>
+        </span>
+    </span>
+  </span>
+
+</div>

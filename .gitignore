@@ -1,0 +1,12 @@
+/.sass-cache/
+_site
+*~
+*.swp
+Gemfile.lock
+/.jekyll-metadata
+/tmp/
+/slacklog_data/
+/slacklog_pages/
+/files/
+/emojis/
+/scripts/.env
